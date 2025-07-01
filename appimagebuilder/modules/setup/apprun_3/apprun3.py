@@ -10,6 +10,7 @@
 #  The above copyright notice and this permission notice shall be included in
 #  all copies or substantial portions of the Software.
 
+import contextlib
 import fnmatch
 import logging
 import os
@@ -131,10 +132,10 @@ class AppRunV3Setup:
         ]
         # find dedicated folder for the architecture
         for base_dir in base_dirs:
-            for entry in base_dir.iterdir():
-                if entry.is_dir() and arch in entry.name:
-                    return entry
-
+            with contextlib.suppress(FileNotFoundError):  # /usr/lib64 is often omitted
+                for entry in base_dir.iterdir():
+                    if entry.is_dir() and arch in entry.name:
+                        return entry
         return None
 
     def _deploy_apprun_config(self):
