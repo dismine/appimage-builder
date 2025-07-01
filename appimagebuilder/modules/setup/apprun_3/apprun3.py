@@ -317,7 +317,9 @@ class AppRunV3Setup:
                     logging.info("Patched script shebang: %s", entry.__str__())
         else:
             logging.warning(
-                "Script interpreter not found in AppDir: %s", rel_interpreter_path
+                "Script interpreter for %s not found in AppDir: %s",
+                entry.path.__str__(),
+                rel_interpreter_path,
             )
 
     def _find_dirs_containing_executable_files(self):
