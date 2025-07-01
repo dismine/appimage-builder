@@ -83,4 +83,5 @@ AppImage:
   update-information: 'gh-releases-zsync|AppImageCrafters|appimage-builder|latest|-*x86_64.AppImage.zsync'
   sign-key: None
   arch: x86_64
+  comp: zstd
 

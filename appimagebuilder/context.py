@@ -67,7 +67,7 @@ class BundleInfo:
         app_info: AppInfo = None,
         update_string: str = None,
         runtime_arch: str = None,
-        compression: str = None,
+        compression: str = "zstd",
         sign_key: str = None,
         file_name: str = None,
     ):
