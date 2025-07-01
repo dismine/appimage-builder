@@ -1,8 +1,8 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
-    apt-get -yq install \
+RUN apt-get update --quiet && \
+    apt-get install --yes --quiet --no-install-recommends software-properties-common \
         breeze-icon-theme \
         desktop-file-utils \
         elfutils \
@@ -17,22 +17,23 @@ RUN apt-get update && \
         libyaml-dev \
         python3 \
         python3-pip \
-        python3-setuptools \
         strace \
         wget \
         squashfs-tools \
         zsync && \
-    apt-get -yq autoclean
+    apt-get -yq autoclean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /tmp
-RUN wget https://github.com/NixOS/patchelf/releases/download/0.12/patchelf-0.12.tar.bz2; \
-    tar -xvf patchelf-0.12.tar.bz2;  \
-    cd patchelf-0.12.20200827.8d3a16e; \
+RUN wget https://github.com/NixOS/patchelf/releases/download/0.18/patchelf-0.18.tar.bz2; \
+    tar -xvf patchelf-0.18.tar.bz2;  \
+    cd patchelf-0.18; \
     ./configure && make && make install; \
     rm -rf patchelf-*
 
-ADD . /opt/appimage-builder
-RUN python3 -m pip install /opt/appimage-builder
-RUN rm -rf /opt/appimage-builder
+COPY . /opt/appimage-builder
+RUN python3 -m pip install setuptools==80.9.0 && \
+    python3 -m pip install /opt/appimage-builder && \
+    rm -rf /opt/appimage-builder
 
 WORKDIR /
