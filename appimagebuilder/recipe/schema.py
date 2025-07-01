@@ -11,7 +11,7 @@
 #   all copies or substantial portions of the Software.
 import logging
 
-from schema import Schema, And, Optional, Or
+from schema import Schema, Optional, Or
 
 from appimagebuilder.recipe.roamer import Roamer
 
@@ -93,7 +93,7 @@ class RecipeSchema:
         self.v1_appimage = Schema(
             {
                 "arch": str,
-                "comp": str,
+                Optional("comp"): str,
                 Optional("update-information"): str,
                 Optional("sign-key"): str,
                 Optional("file_name"): str,

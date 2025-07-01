@@ -88,7 +88,9 @@ class AppImagePrimer(BasePrimer):
         # If the team behind AppImageKit adds a new compression
         # we wouldn't need to update the code and release a new version just for a new compression method
         if self.config.comp() != "None":
-            command += [ "-comp", self.config.comp()]
+            command += ["-comp", self.config.comp()]
+        else:
+            command += ["-no-compression"]
 
         self.logger.info("Creating squashfs from AppDir")
         self.logger.debug(" ".join(command))
@@ -150,7 +152,7 @@ class AppImagePrimer(BasePrimer):
         sha256 = hashlib.sha256()
         with open(self.appimage_path, "rb") as appimage_file:
             while True:
-                data = appimage_file.read(2 ** 10)
+                data = appimage_file.read(2**10)
                 if not data:
                     break
                 md5.update(data)
