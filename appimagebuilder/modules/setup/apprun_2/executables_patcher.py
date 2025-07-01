@@ -11,6 +11,8 @@
 #  all copies or substantial portions of the Software.
 import logging
 import pathlib
+import subprocess
+
 import lief
 
 
@@ -61,11 +63,17 @@ class ExecutablesPatcher:
     def patch_binary_executable(self, path: pathlib.Path):
         try:
             binary = lief.parse(path.__str__())
-            interpreter_path = binary.interpreter
-            if interpreter_path:
+            if interpreter_path := binary.interpreter:
                 patched_interpreter_path = interpreter_path.lstrip("/")
-                binary.interpreter = patched_interpreter_path
-                binary.write(path.__str__())
+                subprocess.run(
+                    [
+                        "patchelf",
+                        "--set-interpreter",
+                        patched_interpreter_path,
+                        path.__str__(),
+                    ],
+                    check=True,
+                )
 
                 self.binary_interpreters_paths[path] = patched_interpreter_path
         except Exception as e:
