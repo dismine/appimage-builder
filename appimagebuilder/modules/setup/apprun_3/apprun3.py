@@ -24,8 +24,12 @@ from appimagebuilder.modules.setup.apprun_3.app_dir_info import AppDirFileInfo
 from appimagebuilder.modules.setup.apprun_3.apprun3_context import AppRun3Context
 from appimagebuilder.modules.setup.apprun_3.helpers.gdk_pixbuf import AppRun3GdkPixbuf
 from appimagebuilder.modules.setup.apprun_3.helpers.glib import AppRun3GLib
-from appimagebuilder.modules.setup.apprun_3.helpers.glibc_module import AppRun3GLibCSetupHelper
-from appimagebuilder.modules.setup.apprun_3.helpers.glibstcpp_module import AppRun3GLibStdCppSetupHelper
+from appimagebuilder.modules.setup.apprun_3.helpers.glibc_module import (
+    AppRun3GLibCSetupHelper,
+)
+from appimagebuilder.modules.setup.apprun_3.helpers.glibstcpp_module import (
+    AppRun3GLibStdCppSetupHelper,
+)
 from appimagebuilder.modules.setup.apprun_3.helpers.gstreamer import AppRun3GStreamer
 from appimagebuilder.modules.setup.apprun_3.helpers.python import AppRun3Python
 from appimagebuilder.modules.setup.apprun_3.helpers.qt import AppRun3QtSetup
@@ -87,7 +91,9 @@ class AppRunV3Setup:
     def _deploy_apprun_bin(self):
         """Deploys the AppRun binary for the main architecture"""
 
-        apprun_bin_path = self.context.binaries_resolver.resolve_executable(self.context.main_arch)
+        apprun_bin_path = self.context.binaries_resolver.resolve_executable(
+            self.context.main_arch
+        )
         apprun_bin_target_path = self.context.app_dir.path / "AppRun"
 
         shutil.copy(apprun_bin_path, apprun_bin_target_path)
@@ -100,6 +106,10 @@ class AppRunV3Setup:
 
         libapprun_so_path = self.context.binaries_resolver.resolve_hooks_library(arch)
 
+        libapprun_so_target_path = self.get_hooks_library_target_path(arch)
+        shutil.copy(libapprun_so_path, libapprun_so_target_path)
+
+    def get_hooks_library_target_path(self, arch):
         libapprun_so_target_dir = self._find_libapprun_hooks_so_target_dir(arch)
 
         # provide a target dir if none was found
@@ -107,9 +117,7 @@ class AppRunV3Setup:
             libapprun_so_target_dir = self.context.app_dir.path / "lib" / arch
             libapprun_so_target_dir.mkdir(parents=True, exist_ok=True)
 
-        # copy the libapprun_hooks.so to the target dir
-        libapprun_so_target_path = libapprun_so_target_dir / "libapprun_hooks.so"
-        shutil.copy(libapprun_so_path, libapprun_so_target_path)
+        return libapprun_so_target_dir / "libapprun_hooks.so"
 
     def _find_libapprun_hooks_so_target_dir(self, arch):
         """Finds a suitable directory for the libapprun_hooks.so"""
@@ -142,7 +150,9 @@ class AppRunV3Setup:
 
         path_env = self._find_dirs_containing_executable_files()
         self.context.runtime_env["PATH"] = ":".join(path_env) + ":$PATH"
-        self.context.runtime_env["LD_PRELOAD"] = "libapprun_hooks.so:$LD_PRELOAD"
+        self.context.runtime_env["LD_PRELOAD"] = (
+            f"{str(self.get_hooks_library_target_path(self.context.main_arch))}:$LD_PRELOAD"
+        )
 
         self._set_user_defined_env_vars()
 
@@ -160,8 +170,10 @@ class AppRunV3Setup:
 
         if len(list(self.context.modules_dir.iterdir())) > 0:
             config["runtime"]["modules_dir"] = (
-                    "$APPDIR/"
-                    + self.context.modules_dir.relative_to(self.context.app_dir.path).__str__()
+                "$APPDIR/"
+                + self.context.modules_dir.relative_to(
+                    self.context.app_dir.path
+                ).__str__()
             )
 
         # write the config file
@@ -261,7 +273,7 @@ class AppRunV3Setup:
                 if shebang:
                     rel_interpreter_path = shebang[0].lstrip("/")
                     current_executable_path = (
-                            self.context.app_dir.path / rel_interpreter_path
+                        self.context.app_dir.path / rel_interpreter_path
                     )
                 else:
                     raise Exception(
@@ -303,7 +315,9 @@ class AppRunV3Setup:
                     f.write(chunk)
                     logging.info("Patched script shebang: %s", entry.__str__())
         else:
-            logging.warning("Script interpreter not found in AppDir: %s", rel_interpreter_path)
+            logging.warning(
+                "Script interpreter not found in AppDir: %s", rel_interpreter_path
+            )
 
     def _find_dirs_containing_executable_files(self):
         """Finds the dirs containing executable files"""
@@ -343,6 +357,9 @@ class AppRunV3Setup:
         user_env = self.context.build_context.recipe.AppDir.runtime.env or {}
         for k, v in user_env.items():
             if k in self.context.runtime_env:
-                logging.warning("User defined environment variable overrides generated config: %s", k)
+                logging.warning(
+                    "User defined environment variable overrides generated config: %s",
+                    k,
+                )
 
             self.context.runtime_env[k] = v
