@@ -37,7 +37,7 @@ def is_binary_a_shared_library(binary):
 
     # read soname from ELF header
     if binary:
-        soname = binary.get(lief.ELF.DYNAMIC_TAGS.SONAME)
+        soname = binary.get(lief.ELF.DynamicEntry.TAG.SONAME)
         return soname is not None
 
     return False
@@ -66,7 +66,7 @@ def read_shebang(path):
         with open(path, "rb") as fhandler:
             line = fhandler.readline().strip().decode()
 
-        if len(line) > 2 and line[0:2] == '#!':
+        if len(line) > 2 and line[0:2] == "#!":
             shebang_split = shlex.split(line[2:].strip())
             return shebang_split
     except UnicodeDecodeError:
