@@ -70,18 +70,28 @@ class DesktopEntryGenerator:
             self.contents = f.readlines()
 
     def _find_app_desktop_entry_path(self, app_dir, app_id):
-        apps_dir = os.path.join(app_dir, "usr", "share", "applications")
-        try:
-            for file_name in os.listdir(apps_dir):
-                if self._match_desktop_entry(app_id, file_name):
-                    return os.path.join(apps_dir, file_name)
-        except FileNotFoundError:
-            raise DesktopEntryGenerator.Error(
-                "Unable to locate the application desktop entry: %s.desktop" % app_id
-            )
+        desktop_filename = f"{app_id}.desktop"
+
+        logging.info(f"Searching for the application desktop entry: {desktop_filename}")
+
+        search_dirs = [
+            os.path.join(app_dir, "usr", "share", "applications"),
+            os.path.join(app_dir, "usr", "local", "share", "applications"),
+            os.path.join(app_dir, "usr", "share", "applications", "kde4"),
+            os.path.join(app_dir),  # fallback: root of AppDir
+        ]
+
+        for directory in search_dirs:
+            logging.info(f"Looking application desktop file at: {directory}")
+            try:
+                for file_name in os.listdir(directory):
+                    if self._match_desktop_entry(app_id, file_name):
+                        return os.path.join(directory, file_name)
+            except FileNotFoundError:
+                continue  # directory doesn't exist, skip
 
         raise DesktopEntryGenerator.Error(
-            "Unable to locate the application desktop entry: %s.desktop" % app_id
+            f"Unable to locate the application desktop entry: {desktop_filename}"
         )
 
     def _save_app_dir_desktop_entry(self, app_id):
