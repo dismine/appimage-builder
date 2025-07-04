@@ -1,5 +1,26 @@
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG PATCHELF_VERSION="0.18.0"
+
+# Install build dependencies
+RUN apt-get update --quiet \
+  && apt-get install --yes --quiet --no-install-recommends software-properties-common  \
+     build-essential \
+     gcc \
+     wget \
+     bzip2
+
+RUN wget https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}.tar.bz2; \
+    tar -xvf patchelf-${PATCHELF_VERSION}.tar.bz2; \
+    cd patchelf-${PATCHELF_VERSION}; \
+    ./configure --prefix=/patchelf-install && make && make check && make install; \
+    /patchelf-install/bin/patchelf --version
+
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
+
+COPY --from=builder /patchelf-install /usr/local
 
 RUN apt-get update --quiet && \
     apt-get install --yes --quiet --no-install-recommends software-properties-common \
@@ -18,18 +39,12 @@ RUN apt-get update --quiet && \
         python3 \
         python3-pip \
         strace \
-        wget \
         squashfs-tools \
         zsync && \
     apt-get -yq autoclean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-WORKDIR /tmp
-RUN wget https://github.com/NixOS/patchelf/releases/download/0.18/patchelf-0.18.tar.bz2; \
-    tar -xvf patchelf-0.18.tar.bz2;  \
-    cd patchelf-0.18; \
-    ./configure && make && make install; \
-    rm -rf patchelf-*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    # Test installs
+    patchelf --version
 
 COPY . /opt/appimage-builder
 RUN python3 -m pip install setuptools==80.9.0 && \
