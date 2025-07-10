@@ -69,7 +69,7 @@ class ExecutablesPatcher:
                     [
                         "patchelf",
                         "--set-interpreter",
-                        patched_interpreter_path,
+                        f"runtime/compat/{patched_interpreter_path}",
                         path.__str__(),
                     ],
                     check=True,
