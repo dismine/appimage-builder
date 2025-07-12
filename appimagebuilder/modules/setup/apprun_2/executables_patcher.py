@@ -62,6 +62,11 @@ class ExecutablesPatcher:
 
     def patch_binary_executable(self, path: pathlib.Path):
         try:
+            # Special case: don't patch crashpad_handler
+            if path.name == "crashpad_handler":
+                logging.debug(f"Skipping patching: {path.name}")
+                return
+
             binary = lief.parse(str(path))
             interpreter_path = binary.interpreter
 
@@ -71,25 +76,13 @@ class ExecutablesPatcher:
             # Get normalized (relative) interpreter path
             patched_interpreter_path = interpreter_path.lstrip("/")
 
-            # Skip if already using runtime/compat (avoid double patching)
-            if patched_interpreter_path.startswith("runtime/compat/"):
-                logging.debug(f"Skipping already patched: {path}")
-                return
-
-            # Special case: only crashpad_handler needs runtime/compat
-            if path.name == "crashpad_handler":
-                patched_interpreter_path = f"runtime/compat/{patched_interpreter_path}"
-
             # Apply a patch
             subprocess.run(
                 ["patchelf", "--set-interpreter", patched_interpreter_path, str(path)],
                 check=True,
             )
 
-            # Record only non-crashpad_handler interpreters
-            if path.name != "crashpad_handler":
-                self.binary_interpreters_paths[path] = patched_interpreter_path
-
+            self.binary_interpreters_paths[path] = patched_interpreter_path
             logging.debug(f"Patched {path} → {patched_interpreter_path}")
         except Exception as e:
             logging.warning(f"Unable to patch binary executables: {e}")
